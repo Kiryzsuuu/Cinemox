@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Cinemox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html">CINEMOX ADMIN</a>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Back to Site</a>
+                <button onclick="logout()" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#dashboard" onclick="showSection('dashboard')" class="active">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a></li>
+                <li><a href="#movies" onclick="showSection('movies')">
+                    <i class="fas fa-film"></i> Movies
+                </a></li>
+                <li><a href="#schedules" onclick="showSection('schedules')">
+                    <i class="fas fa-calendar"></i> Schedules
+                </a></li>
+                <li><a href="#bookings" onclick="showSection('bookings')">
+                    <i class="fas fa-ticket-alt"></i> Bookings
+                </a></li>
+                <li><a href="#users" onclick="showSection('users')">
+                    <i class="fas fa-users"></i> Users
+                </a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="admin-section active">
+                <h1>Dashboard</h1>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <h3 id="totalUsers">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-film"></i>
+                        <div>
+                            <h3 id="totalMovies">0</h3>
+                            <p>Total Movies</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-ticket-alt"></i>
+                        <div>
+                            <h3 id="totalBookings">0</h3>
+                            <p>Total Bookings</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-money-bill"></i>
+                        <div>
+                            <h3 id="totalRevenue">Rp 0</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3>Monthly Bookings</h3>
+                        <canvas id="bookingsChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Monthly Revenue</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Movies Section -->
+            <section id="movies" class="admin-section">
+                <h1>Manage Movies</h1>
+                <button class="btn-add" onclick="showAddMovieForm()">
+                    <i class="fas fa-plus"></i> Add Movie
+                </button>
+                <div class="table-container">
+                    <table id="moviesTable"></table>
+                </div>
+            </section>
+
+            <!-- Schedules Section -->
+            <section id="schedules" class="admin-section">
+                <h1>Manage Schedules</h1>
+                <button class="btn-add" onclick="showAddScheduleForm()">
+                    <i class="fas fa-plus"></i> Add Schedule
+                </button>
+                <div class="table-container">
+                    <table id="schedulesTable"></table>
+                </div>
+            </section>
+
+            <!-- Bookings Section -->
+            <section id="bookings" class="admin-section">
+                <h1>All Bookings</h1>
+                <div class="table-container">
+                    <table id="bookingsTable"></table>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="admin-section">
+                <h1>Manage Users</h1>
+                <div class="table-container">
+                    <table id="usersTable"></table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/notifications.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

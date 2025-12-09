@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - Cinemox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/bookings.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html">CINEMOX</a>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <div class="nav-user" id="navUser">
+                    <span id="userName"></span>
+                    <a href="my-bookings.html" class="btn-bookings">My Bookings</a>
+                    <button onclick="logout()" class="btn-logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="bookings-section">
+        <div class="container">
+            <h1>My Bookings</h1>
+            <div class="bookings-grid" id="bookingsGrid">
+                <!-- Bookings will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!checkAuth()) return;
+            await loadBookings();
+        });
+
+        async function loadBookings() {
+            try {
+                const response = await apiRequest('/bookings/my-bookings');
+                displayBookings(response.data);
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function displayBookings(bookings) {
+            const grid = document.getElementById('bookingsGrid');
+            
+            if (bookings.length === 0) {
+                grid.innerHTML = '<p class="no-bookings">No bookings found</p>';
+                return;
+            }
+            
+            grid.innerHTML = bookings.map(booking => `
+                <div class="booking-card">
+                    <div class="booking-header">
+                        <h3>${booking.movieTitle}</h3>
+                        <span class="booking-status ${booking.status.toLowerCase()}">${booking.status}</span>
+                    </div>
+                    <div class="booking-info">
+                        <p><i class="fas fa-ticket-alt"></i> <strong>Booking Code:</strong> ${booking.bookingCode}</p>
+                        <p><i class="fas fa-calendar"></i> ${booking.showDate}</p>
+                        <p><i class="fas fa-clock"></i> ${booking.showTime}</p>
+                        <p><i class="fas fa-tv"></i> ${booking.theater}</p>
+                        <p><i class="fas fa-chair"></i> Seats: ${booking.seats.join(', ')}</p>
+                        <p><i class="fas fa-money-bill"></i> Rp ${booking.totalPrice.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="booking-barcode">
+                        <img src="${booking.barcodeUrl}" alt="Barcode">
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

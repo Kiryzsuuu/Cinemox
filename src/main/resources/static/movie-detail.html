@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Detail - Cinemox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/movie-detail.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html">CINEMOX</a>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn-login">Login</a>
+                    <a href="register.html" class="btn-register">Register</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <a href="my-bookings.html" class="btn-bookings">My Bookings</a>
+                    <button onclick="logout()" class="btn-logout">Logout</button>
+                </div>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Movie Detail Section -->
+    <section class="movie-detail-section">
+        <div class="container">
+            <div class="movie-detail" id="movieDetail">
+                <!-- Movie detail will be loaded here -->
+            </div>
+            
+            <div class="schedules-section">
+                <h2>Available Schedules</h2>
+                <div class="schedules-grid" id="schedulesGrid">
+                    <!-- Schedules will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal" style="display: none;">
+        <div class="modal-content booking-modal">
+            <div class="modal-header">
+                <h3>Select Your Seats</h3>
+                <button class="close-btn" onclick="closeBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="screen">SCREEN</div>
+                <div class="seats-container" id="seatsContainer">
+                    <!-- Seats will be generated here -->
+                </div>
+                <div class="seat-legend">
+                    <div class="legend-item">
+                        <div class="seat available"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat selected"></div>
+                        <span>Selected</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat booked"></div>
+                        <span>Booked</span>
+                    </div>
+                </div>
+                <div class="booking-summary">
+                    <p><strong>Waktu:</strong> <span id="scheduleTimeInfo">-</span></p>
+                    <p><strong>Selected Seats:</strong> <span id="selectedSeatsText">None</span></p>
+                    <p><strong>Total Price:</strong> <span id="totalPrice">Rp 0</span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeBookingModal()">Cancel</button>
+                <button class="btn-confirm" onclick="confirmBooking()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/movie-detail.js"></script>
+</body>
+</html>

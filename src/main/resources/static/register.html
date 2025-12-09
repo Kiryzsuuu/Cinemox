@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Cinemox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box animate-fade-in">
+            <div class="auth-header">
+                <a href="index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+                <h1>CINEMOX</h1>
+                <h2>Create Account</h2>
+            </div>
+            
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="fullName">
+                        <i class="fas fa-user"></i> Full Name
+                    </label>
+                    <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email
+                    </label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="phoneNumber">
+                        <i class="fas fa-phone"></i> Phone Number
+                    </label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter your phone number">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" id="password" name="password" required minlength="6" placeholder="Enter your password (min 6 characters)">
+                </div>
+                
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-user-plus"></i> Register
+                </button>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="login.html">Login here</a></p>
+                </div>
+            </form>
+        </div>
+        
+        <!-- OTP Modal -->
+        <div id="otpModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Verify Your Email</h3>
+                <p>We've sent a 6-digit OTP to your email</p>
+                <form id="otpForm">
+                    <div class="form-group">
+                        <input type="text" id="otp" name="otp" required maxlength="6" placeholder="Enter 6-digit OTP">
+                    </div>
+                    <button type="submit" class="btn-submit">Verify</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/notifications.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let userEmail = '';
+        
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const password = document.getElementById('password').value;
+            
+            userEmail = email;
+            
+            try {
+                const response = await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ fullName, email, phoneNumber, password })
+                });
+                
+                if (response.success) {
+                    alert('Registration successful. Please check your email for OTP.');
+                    document.getElementById('otpModal').style.display = 'flex';
+                } else {
+                    alert(response.message);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+        
+        document.getElementById('otpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const otp = document.getElementById('otp').value;
+            
+            try {
+                const response = await apiRequest('/auth/verify-email', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: userEmail, otp })
+                });
+                
+                if (response.success) {
+                    alert('Email verified successfully. You can now login.');
+                    window.location.href = 'login.html';
+                } else {
+                    alert(response.message);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    </script>
+</body>
+</html>

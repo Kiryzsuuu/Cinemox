@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  cinemox:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGODB_URI=mongodb+srv://maskiryz23_db_user:G9wWKoEY0LXFA8gT@cinemox1.mx6sksz.mongodb.net/?appName=Cinemox1
+      - MAIL_USERNAME=maskiryz23@gmail.com
+      - MAIL_PASSWORD=qgno iacp kams qbbf
+      - JWT_SECRET=cinemox-secret-key-2023-super-secure-key-for-authentication
+    restart: unless-stopped
