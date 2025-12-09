@@ -51,6 +51,8 @@ public class SecurityConfig {
                                 "/forgot-password.html",
                                 "/movies.html",
                                 "/movie-detail.html",
+                                "/now-showing.html",
+                                "/coming-soon.html",
                                 "/booking.html",
                                 "/my-bookings.html",
                                 "/profile.html",

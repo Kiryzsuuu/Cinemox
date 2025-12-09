@@ -17,16 +17,11 @@
             </div>
             <div class="nav-menu" id="navMenu">
                 <a href="index.html" class="nav-link">Home</a>
-                <a href="#now-showing" class="nav-link">Now Showing</a>
-                <a href="#coming-soon" class="nav-link">Coming Soon</a>
                 <div class="nav-user" id="navUser">
                     <a href="profile.html" class="user-name-link active" id="userName"></a>
                     <a href="my-bookings.html" class="btn-bookings">My Bookings</a>
                     <button onclick="logout()" class="btn-logout">Logout</button>
                 </div>
-            </div>
-            <div class="nav-toggle" id="navToggle">
-                <i class="fas fa-bars"></i>
             </div>
         </div>
     </nav>
@@ -156,6 +151,15 @@
                         <span class="info-value" id="userRole"></span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Logout Section -->
+            <div class="profile-card logout-section">
+                <button onclick="logout()" class="btn-logout-profile">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+                <p class="logout-text">You will be logged out from your account</p>
             </div>
         </div>
     </div>

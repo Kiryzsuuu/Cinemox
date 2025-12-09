@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Now Showing - Cinemox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/movies.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html">CINEMOX</a>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="now-showing.html" class="nav-link active">Now Showing</a>
+                <a href="coming-soon.html" class="nav-link">Coming Soon</a>
+                <div class="nav-auth" id="navAuth">
+                    <a href="login.html" class="btn-login">Login</a>
+                    <a href="register.html" class="btn-register">Register</a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <a href="profile.html" class="user-name-link" id="userName"></a>
+                    <a href="my-bookings.html" class="btn-bookings">My Bookings</a>
+                </div>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Now Showing</h1>
+            <p class="page-subtitle">Discover movies currently playing in theaters</p>
+        </div>
+    </section>
+
+    <!-- Movies Section -->
+    <section class="movies-section">
+        <div class="container">
+            <div class="movies-grid" id="nowShowingGrid">
+                <!-- Movies will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check authentication
+            if (isLoggedIn()) {
+                showUserNav();
+            }
+
+            // Load now showing movies
+            await loadMovies();
+        });
+
+        async function loadMovies() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/movies/now-showing`);
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    displayMovies(data.data);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading movies:', error);
+                showErrorState();
+            }
+        }
+
+        function displayMovies(movies) {
+            const grid = document.getElementById('nowShowingGrid');
+            
+            if (movies.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            grid.innerHTML = movies.map((movie, index) => `
+                <div class="movie-card animate-fade-in" style="animation-delay: ${index * 0.1}s">
+                    <div class="movie-poster">
+                        <img src="${movie.posterUrl}" alt="${movie.title}">
+                        <div class="movie-overlay">
+                            <a href="movie-detail.html?id=${movie.id}" class="btn-view-details">
+                                <i class="fas fa-info-circle"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <h3 class="movie-title">${movie.title}</h3>
+                        <div class="movie-meta">
+                            <span class="movie-genre"><i class="fas fa-film"></i> ${movie.genre}</span>
+                            <span class="movie-duration"><i class="fas fa-clock"></i> ${movie.duration} min</span>
+                        </div>
+                        <div class="movie-rating">
+                            <i class="fas fa-star"></i>
+                            <span>${movie.averageRating ? movie.averageRating.toFixed(1) : 'N/A'}</span>
+                            <span class="rating-count">(${movie.totalReviews || 0})</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showEmptyState() {
+            const grid = document.getElementById('nowShowingGrid');
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-film"></i>
+                    <h3>No Movies Available</h3>
+                    <p>There are no movies currently showing. Check back later!</p>
+                </div>
+            `;
+        }
+
+        function showErrorState() {
+            const grid = document.getElementById('nowShowingGrid');
+            grid.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Loading Movies</h3>
+                    <p>Something went wrong. Please try again later.</p>
+                    <button onclick="loadMovies()" class="btn-retry">Retry</button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
