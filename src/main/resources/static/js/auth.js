@@ -97,13 +97,31 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error('Session expired. Please login again.');
         }
         
-        const data = await response.json();
+        // Check if response has content
+        const contentType = response.headers.get('content-type');
+        let data = null;
         
-        if (!response.ok) {
-            throw new Error(data.message || 'Something went wrong');
+        if (contentType && contentType.includes('application/json')) {
+            const text = await response.text();
+            data = text ? JSON.parse(text) : null;
+        } else if (response.status === 204 || response.status === 205) {
+            // No content responses
+            data = { success: true };
+        } else {
+            // Try to parse as JSON, fallback to empty object
+            try {
+                const text = await response.text();
+                data = text ? JSON.parse(text) : { success: response.ok };
+            } catch (e) {
+                data = { success: response.ok };
+            }
         }
         
-        return data;
+        if (!response.ok) {
+            throw new Error(data?.message || 'Something went wrong');
+        }
+        
+        return data || { success: true };
     } catch (error) {
         throw error;
     }

@@ -469,7 +469,7 @@ function showAddMovieForm() {
                 cast: formData.get('cast').split(',').map(c => c.trim()),
                 posterUrl: formData.get('posterUrl'),
                 trailerUrl: formData.get('trailerUrl') || null,
-                releaseDate: formData.get('releaseDate'),
+                releaseDate: formData.get('releaseDate') + 'T00:00:00',
                 nowShowing: formData.get('nowShowing') === 'on',
                 comingSoon: formData.get('comingSoon') === 'on'
             };
