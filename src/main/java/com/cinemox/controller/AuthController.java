@@ -69,4 +69,15 @@ public class AuthController {
                     .body(new ApiResponse(false, e.getMessage(), null));
         }
     }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse> resendOTP(@RequestParam String email, @RequestParam String type) {
+        try {
+            ApiResponse response = authService.resendOTP(email, type);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage(), null));
+        }
+    }
 }

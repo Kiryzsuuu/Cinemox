@@ -35,28 +35,39 @@ public class AuthService {
 
     @Transactional
     public ApiResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return new ApiResponse(false, "Email already exists", null);
+        try {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                return new ApiResponse(false, "Email already exists", null);
+            }
+
+            // Create user (not verified yet)
+            User user = new User();
+            user.setEmail(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFullName(request.getFullName());
+            user.setPhoneNumber(request.getPhoneNumber());
+            user.setEmailVerified(false);
+
+            Set<String> roles = new HashSet<>();
+            roles.add("USER");
+            user.setRoles(roles);
+
+            userRepository.save(user);
+
+            // Send OTP after user is created
+            try {
+                emailService.sendOTP(request.getEmail(), "REGISTRATION");
+            } catch (Exception e) {
+                System.err.println("Failed to send OTP email: " + e.getMessage());
+                e.printStackTrace();
+                // Continue with registration even if email fails
+            }
+
+            return new ApiResponse(true,
+                    "Registration successful. Please verify your email with OTP sent to " + request.getEmail(), null);
+        } catch (Exception e) {
+            throw new RuntimeException("Registration failed: " + e.getMessage());
         }
-
-        // Send OTP
-        emailService.sendOTP(request.getEmail(), "REGISTRATION");
-
-        // Create user (not verified yet)
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFullName(request.getFullName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setEmailVerified(false);
-
-        Set<String> roles = new HashSet<>();
-        roles.add("USER");
-        user.setRoles(roles);
-
-        userRepository.save(user);
-
-        return new ApiResponse(true, "Registration successful. Please verify your email with OTP.", null);
     }
 
     @Transactional
@@ -131,5 +142,20 @@ public class AuthService {
         otpRepository.save(otp);
 
         return new ApiResponse(true, "Password reset successful", null);
+    }
+
+    public ApiResponse resendOTP(String email, String type) {
+        try {
+            // Check if user exists
+            userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Send new OTP
+            emailService.sendOTP(email, type);
+
+            return new ApiResponse(true, "OTP sent to " + email, null);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send OTP: " + e.getMessage());
+        }
     }
 }

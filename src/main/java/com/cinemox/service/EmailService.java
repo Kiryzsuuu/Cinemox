@@ -22,24 +22,35 @@ public class EmailService {
     private OTPRepository otpRepository;
 
     public void sendOTP(String email, String type) {
-        String otp = generateOTP();
+        try {
+            String otp = generateOTP();
 
-        // Delete existing OTPs for this email
-        otpRepository.deleteByEmail(email);
+            // Delete existing OTPs for this email
+            otpRepository.deleteByEmail(email);
 
-        // Save new OTP
-        OTP otpEntity = new OTP();
-        otpEntity.setEmail(email);
-        otpEntity.setOtp(otp);
-        otpEntity.setType(type);
-        otpEntity.setExpiryTime(LocalDateTime.now().plusMinutes(10));
-        otpRepository.save(otpEntity);
+            // Save new OTP
+            OTP otpEntity = new OTP();
+            otpEntity.setEmail(email);
+            otpEntity.setOtp(otp);
+            otpEntity.setType(type);
+            otpEntity.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+            otpRepository.save(otpEntity);
 
-        // Send email
-        String subject = type.equals("REGISTRATION") ? "Verify Your Email - Cinemox" : "Reset Your Password - Cinemox";
-        String body = buildOTPEmailBody(otp, type);
+            System.out.println("OTP generated for " + email + ": " + otp);
 
-        sendHtmlEmail(email, subject, body);
+            // Send email
+            String subject = type.equals("REGISTRATION") ? "Verify Your Email - Cinemox"
+                    : "Reset Your Password - Cinemox";
+            String body = buildOTPEmailBody(otp, type);
+
+            sendHtmlEmail(email, subject, body);
+
+            System.out.println("OTP email sent successfully to " + email);
+        } catch (Exception e) {
+            System.err.println("Error sending OTP: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send OTP email: " + e.getMessage(), e);
+        }
     }
 
     public void sendBookingConfirmation(String email, String bookingCode, String movieTitle,
@@ -54,6 +65,9 @@ public class EmailService {
 
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
+            System.out.println("Attempting to send email to: " + to);
+            System.out.println("Subject: " + subject);
+
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -63,8 +77,12 @@ public class EmailService {
             helper.setText(htmlBody, true);
 
             mailSender.send(message);
+
+            System.out.println("Email sent successfully to: " + to);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send email: " + e.getMessage());
+            System.err.println("Failed to send email to " + to + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
         }
     }
 

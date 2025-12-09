@@ -39,6 +39,10 @@ public class Movie {
 
     private boolean comingSoon = false;
 
+    private Double averageRating = 0.0; // Average user rating (1-5)
+
+    private Integer totalReviews = 0; // Total number of reviews
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt = LocalDateTime.now();

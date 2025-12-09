@@ -39,8 +39,13 @@
                     <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
                 </div>
                 
-                <button type="submit" class="btn-submit">
-                    <i class="fas fa-sign-in-alt"></i> Login
+                <button type="submit" class="btn-submit" id="loginBtn">
+                    <span class="btn-text">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </span>
+                    <span class="btn-loader" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Logging in...
+                    </span>
                 </button>
                 
                 <div class="auth-footer">
@@ -50,20 +55,69 @@
         </div>
     </div>
     
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
     <script src="js/notifications.js"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
+        // Toast Notification Function
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type} toast-show`;
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas ${icons[type] || icons.info}"></i>
+                </div>
+                <div class="toast-content">
+                    <p>${message}</p>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('toast-hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+        
+        // Show Loading
+        function showLoading(buttonId) {
+            const btn = document.getElementById(buttonId);
+            btn.disabled = true;
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.btn-loader').style.display = 'inline-flex';
+        }
+        
+        // Hide Loading
+        function hideLoading(buttonId) {
+            const btn = document.getElementById(buttonId);
+            btn.disabled = false;
+            btn.querySelector('.btn-text').style.display = 'inline-flex';
+            btn.querySelector('.btn-loader').style.display = 'none';
+        }
+        
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const submitBtn = e.target.querySelector('button[type="submit"]');
             
-            // Show loading
-            loading.show('Logging in...');
-            submitBtn.disabled = true;
+            showLoading('loginBtn');
             
             try {
                 const response = await apiRequest('/auth/login', {
@@ -80,25 +134,22 @@
                         role: authData.role
                     });
                     
-                    notify.success('Login successful! Redirecting...');
+                    showToast('Login successful! Redirecting...', 'success');
                     
                     setTimeout(() => {
-                        loading.hide();
                         if (authData.role === 'ADMIN') {
                             window.location.href = 'admin.html';
                         } else {
                             window.location.href = 'index.html';
                         }
-                    }, 800);
+                    }, 1500);
                 } else {
-                    loading.hide();
-                    submitBtn.disabled = false;
-                    notify.error(response.message || 'Login failed');
+                    hideLoading('loginBtn');
+                    showToast(response.message || 'Login failed. Please check your credentials.', 'error');
                 }
             } catch (error) {
-                loading.hide();
-                submitBtn.disabled = false;
-                notify.error(error.message || 'An error occurred during login');
+                hideLoading('loginBtn');
+                showToast(error.message || 'Failed to login. Please check your connection.', 'error');
             }
         });
     </script>

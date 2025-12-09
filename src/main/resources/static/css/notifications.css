@@ -147,6 +147,9 @@
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     max-width: 500px;
     width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     transform: scale(0.9);
     transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
@@ -169,6 +172,9 @@
 
 .custom-modal-body {
     padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(90vh - 140px);
 }
 
 .custom-modal-body p {
@@ -279,6 +285,11 @@
     .custom-modal-content {
         width: 95%;
         max-width: none;
+        max-height: 95vh;
+    }
+
+    .custom-modal-body {
+        max-height: calc(95vh - 120px);
     }
 
     .custom-modal-header,

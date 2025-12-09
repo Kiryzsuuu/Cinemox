@@ -2,14 +2,29 @@
 let currentMovie = null;
 let currentSchedule = null;
 let selectedSeats = [];
+let selectedRating = 0;
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const movieId = urlParams.get('id');
     
+    // Get current user
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            const response = await apiRequest('/auth/me');
+            currentUser = response.data;
+        } catch (error) {
+            console.log('User not logged in');
+        }
+    }
+    
     if (movieId) {
         await loadMovieDetail(movieId);
         await loadSchedules(movieId);
+        await loadReviews(movieId);
+        setupReviewForm();
     }
 });
 
@@ -237,4 +252,211 @@ function formatDate(dateStr) {
 
 function formatPrice(price) {
     return new Intl.NumberFormat('id-ID').format(price);
+}
+
+// Review Functions
+async function loadReviews(movieId) {
+    try {
+        // Load review stats
+        const statsResponse = await fetch(`${API_BASE_URL}/reviews/movie/${movieId}/stats`);
+        const stats = await statsResponse.json();
+        displayReviewStats(stats);
+
+        // Load reviews
+        const reviewsResponse = await fetch(`${API_BASE_URL}/reviews/movie/${movieId}`);
+        const reviews = await reviewsResponse.json();
+        displayReviews(reviews);
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+    }
+}
+
+function displayReviewStats(stats) {
+    const averageRating = stats.averageRating || 0;
+    const totalReviews = stats.totalReviews || 0;
+
+    document.getElementById('averageRating').textContent = averageRating.toFixed(1);
+    document.getElementById('totalReviews').textContent = `${totalReviews} review${totalReviews !== 1 ? 's' : ''}`;
+
+    // Display stars
+    const starsContainer = document.getElementById('averageStars');
+    starsContainer.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('i');
+        star.className = i <= Math.round(averageRating) ? 'fas fa-star' : 'far fa-star';
+        starsContainer.appendChild(star);
+    }
+}
+
+function displayReviews(reviews) {
+    const reviewsList = document.getElementById('reviewsList');
+    const addReviewSection = document.getElementById('addReviewSection');
+
+    if (!currentUser) {
+        addReviewSection.innerHTML = `
+            <div class="login-prompt">
+                <p>Please login to write a review</p>
+                <a href="login.html" class="btn-login-review">Login</a>
+            </div>
+        `;
+    }
+
+    if (reviews.length === 0) {
+        reviewsList.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to review!</div>';
+        return;
+    }
+
+    reviewsList.innerHTML = reviews.map(review => {
+        const userInitial = review.userName.charAt(0).toUpperCase();
+        const canDelete = currentUser && (currentUser.id === review.userId || currentUser.role === 'ADMIN');
+        const reviewDate = new Date(review.createdAt).toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        return `
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-user">
+                        <div class="user-avatar">${userInitial}</div>
+                        <div class="user-info">
+                            <h4>${review.userName}</h4>
+                            <p class="review-date">${reviewDate}</p>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        <div class="stars">
+                            ${generateStars(review.rating)}
+                        </div>
+                    </div>
+                </div>
+                <div class="review-content">
+                    <p>${review.comment}</p>
+                </div>
+                ${canDelete ? `
+                    <div class="review-actions">
+                        <button class="btn-delete-review" onclick="deleteReview('${review.id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function generateStars(rating) {
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+        starsHtml += `<i class="${i <= rating ? 'fas' : 'far'} fa-star"></i>`;
+    }
+    return starsHtml;
+}
+
+function setupReviewForm() {
+    const stars = document.querySelectorAll('.star-rating i');
+    const ratingInput = document.getElementById('ratingInput');
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = parseInt(star.dataset.rating);
+            ratingInput.value = selectedRating;
+            updateStarDisplay(stars, selectedRating);
+        });
+
+        star.addEventListener('mouseenter', () => {
+            const hoverRating = parseInt(star.dataset.rating);
+            updateStarDisplay(stars, hoverRating);
+        });
+    });
+
+    const starRating = document.querySelector('.star-rating');
+    starRating.addEventListener('mouseleave', () => {
+        updateStarDisplay(stars, selectedRating);
+    });
+
+    const reviewForm = document.getElementById('reviewForm');
+    reviewForm.addEventListener('submit', handleReviewSubmit);
+}
+
+function updateStarDisplay(stars, rating) {
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.remove('far');
+            star.classList.add('fas', 'active');
+        } else {
+            star.classList.remove('fas', 'active');
+            star.classList.add('far');
+        }
+    });
+}
+
+async function handleReviewSubmit(e) {
+    e.preventDefault();
+
+    if (!currentUser) {
+        alert('Please login to submit a review');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const rating = parseInt(document.getElementById('ratingInput').value);
+    const comment = document.getElementById('commentInput').value.trim();
+
+    if (rating === 0) {
+        alert('Please select a rating');
+        return;
+    }
+
+    if (!comment) {
+        alert('Please write a comment');
+        return;
+    }
+
+    const reviewData = {
+        movieId: currentMovie.id,
+        rating: rating,
+        comment: comment
+    };
+
+    try {
+        const response = await apiRequest('/reviews', {
+            method: 'POST',
+            body: JSON.stringify(reviewData)
+        });
+
+        if (response) {
+            alert('Review submitted successfully!');
+            // Reset form
+            selectedRating = 0;
+            document.getElementById('ratingInput').value = 0;
+            document.getElementById('commentInput').value = '';
+            const stars = document.querySelectorAll('.star-rating i');
+            updateStarDisplay(stars, 0);
+            // Reload reviews
+            await loadReviews(currentMovie.id);
+        }
+    } catch (error) {
+        alert(error.message || 'Failed to submit review');
+    }
+}
+
+async function deleteReview(reviewId) {
+    if (!confirm('Are you sure you want to delete this review?')) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/reviews/${reviewId}`, {
+            method: 'DELETE'
+        });
+
+        if (response) {
+            alert('Review deleted successfully');
+            await loadReviews(currentMovie.id);
+        }
+    } catch (error) {
+        alert(error.message || 'Failed to delete review');
+    }
 }

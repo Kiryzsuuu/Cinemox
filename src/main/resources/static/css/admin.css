@@ -183,6 +183,72 @@ table tr:hover {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Admin Form Styles */
+.admin-form {
+    text-align: left;
+    padding: 1rem 0;
+}
+
+.admin-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.admin-form input[type="text"],
+.admin-form input[type="email"],
+.admin-form input[type="password"],
+.admin-form input[type="tel"],
+.admin-form input[type="number"],
+.admin-form input[type="url"],
+.admin-form input[type="date"],
+.admin-form input[type="time"],
+.admin-form select,
+.admin-form textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 183, 181, 0.1);
+}
+
+.admin-form textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.admin-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.admin-form input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.admin-form label:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+}
+
 @media (max-width: 968px) {
     .admin-container {
         flex-direction: column;
@@ -195,6 +261,10 @@ table tr:hover {
     }
     
     .charts-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-form .form-row {
         grid-template-columns: 1fr;
     }
 }
