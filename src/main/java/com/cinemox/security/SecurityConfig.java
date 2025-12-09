@@ -53,10 +53,12 @@ public class SecurityConfig {
                                 "/movie-detail.html",
                                 "/booking.html",
                                 "/my-bookings.html",
+                                "/profile.html",
                                 "/admin.html",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
+                                "/uploads/**",
                                 "/favicon.ico")
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

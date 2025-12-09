@@ -24,6 +24,8 @@ public class User {
 
     private String phoneNumber;
 
+    private String profilePicture;
+
     private Set<String> roles = new HashSet<>();
 
     private boolean emailVerified = false;
