@@ -417,20 +417,22 @@
 
 /* Logout Section */
 .logout-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
     text-align: center;
     padding: 3rem 2rem;
     margin-top: 2rem;
+    border-radius: 15px;
+    transition: all 0.3s ease;
 }
 
 .logout-section:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 12px 30px rgba(0, 188, 212, 0.4);
 }
 
 .btn-logout-profile {
     background: white;
-    color: #667eea;
+    color: #00bcd4;
     border: none;
     padding: 15px 50px;
     border-radius: 30px;
