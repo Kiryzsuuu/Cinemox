@@ -88,10 +88,27 @@
                 return;
             }
 
-            grid.innerHTML = movies.map((movie, index) => `
+            grid.innerHTML = movies.map((movie, index) => {
+                // Generate status badges
+                let badges = '';
+                if (movie.nowShowing && movie.comingSoon) {
+                    badges = `
+                        <div class="movie-badge badge-now-showing">Now Showing</div>
+                        <div class="movie-badge badge-coming-soon" style="top: 55px;">Coming Soon</div>
+                    `;
+                } else if (movie.nowShowing) {
+                    badges = '<div class="movie-badge badge-now-showing">Now Showing</div>';
+                } else if (movie.comingSoon) {
+                    badges = '<div class="movie-badge badge-coming-soon">Coming Soon</div>';
+                } else {
+                    badges = '<div class="movie-badge badge-unavailable">Not Available</div>';
+                }
+                
+                return `
                 <div class="movie-card animate-fade-in" style="animation-delay: ${index * 0.1}s">
                     <div class="movie-poster">
                         <img src="${movie.posterUrl}" alt="${movie.title}">
+                        ${badges}
                         <div class="movie-overlay">
                             <a href="movie-detail.html?id=${movie.id}" class="btn-view-details">
                                 <i class="fas fa-info-circle"></i> View Details
@@ -111,7 +128,8 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function showEmptyState() {

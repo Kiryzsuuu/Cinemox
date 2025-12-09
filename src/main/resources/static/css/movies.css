@@ -123,15 +123,31 @@
     position: absolute;
     top: 15px;
     right: 15px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: white;
     padding: 8px 15px;
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
     z-index: 2;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
     animation: pulse 2s ease-in-out infinite;
+}
+
+/* Now Showing Badge - Teal */
+.badge-now-showing {
+    background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+}
+
+/* Coming Soon Badge - Orange */
+.badge-coming-soon {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
+
+/* Not Available Badge - Gray */
+.badge-unavailable {
+    background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+    box-shadow: 0 4px 15px rgba(158, 158, 158, 0.4);
 }
 
 @keyframes pulse {
