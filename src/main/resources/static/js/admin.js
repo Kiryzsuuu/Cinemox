@@ -135,20 +135,32 @@ async function loadMovies() {
                 </tr>
             </thead>
             <tbody>
-                ${movies.map(movie => `
+                ${movies.map(movie => {
+                    let status = '';
+                    if (movie.nowShowing && movie.comingSoon) {
+                        status = '<span class="badge badge-primary">Now Showing</span> <span class="badge badge-info">Coming Soon</span>';
+                    } else if (movie.nowShowing) {
+                        status = '<span class="badge badge-primary">Now Showing</span>';
+                    } else if (movie.comingSoon) {
+                        status = '<span class="badge badge-info">Coming Soon</span>';
+                    } else {
+                        status = '<span class="badge badge-secondary">Not Available</span>';
+                    }
+                    return `
                     <tr>
                         <td>${movie.title}</td>
                         <td>${movie.genre}</td>
                         <td>${movie.duration} min</td>
                         <td>${movie.rating}</td>
-                        <td>${movie.nowShowing ? 'Now Showing' : 'Coming Soon'}</td>
+                        <td>${status}</td>
                         <td>
                             <button class="btn-action btn-delete" onclick="deleteMovie('${movie.id}')">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                         </td>
                     </tr>
-                `).join('')}
+                    `;
+                }).join('')}
             </tbody>
         `;
     } catch (error) {
@@ -415,11 +427,19 @@ function showAddMovieForm() {
                 <label>Release Date *</label>
                 <input type="date" name="releaseDate" required>
             </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" name="nowShowing">
-                    Now Showing
-                </label>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="nowShowing" id="nowShowingCheck">
+                        Now Showing
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="comingSoon" id="comingSoonCheck">
+                        Coming Soon
+                    </label>
+                </div>
             </div>
         </form>
     `;
@@ -450,7 +470,8 @@ function showAddMovieForm() {
                 posterUrl: formData.get('posterUrl'),
                 trailerUrl: formData.get('trailerUrl') || null,
                 releaseDate: formData.get('releaseDate'),
-                nowShowing: formData.get('nowShowing') === 'on'
+                nowShowing: formData.get('nowShowing') === 'on',
+                comingSoon: formData.get('comingSoon') === 'on'
             };
             
             loading.show('Adding movie...');
