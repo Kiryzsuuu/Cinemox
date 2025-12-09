@@ -97,6 +97,10 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error('Session expired. Please login again.');
         }
         
+        if (response.status === 403) {
+            throw new Error('Access denied. You do not have permission to perform this action.');
+        }
+        
         // Check if response has content
         const contentType = response.headers.get('content-type');
         let data = null;

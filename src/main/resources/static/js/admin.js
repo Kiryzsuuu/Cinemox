@@ -476,6 +476,10 @@ function showAddMovieForm() {
             
             loading.show('Adding movie...');
             try {
+                console.log('Sending movie data:', movieData);
+                console.log('Token:', getToken());
+                console.log('User info:', getUserInfo());
+                
                 await apiRequest('/admin/movies', {
                     method: 'POST',
                     body: JSON.stringify(movieData)
@@ -486,6 +490,7 @@ function showAddMovieForm() {
                 return true;
             } catch (error) {
                 loading.hide();
+                console.error('Add movie error:', error);
                 notify.error(error.message || 'Failed to add movie');
                 return false;
             }
