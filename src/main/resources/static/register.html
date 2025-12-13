@@ -63,52 +63,6 @@
                 </div>
             </form>
         </div>
-        
-        <!-- OTP Modal -->
-        <div id="otpModal" class="custom-modal" style="display: none;">
-            <div class="custom-modal-overlay" id="modalOverlay"></div>
-            <div class="custom-modal-content otp-modal-content" id="modalContent">
-                <div class="otp-header">
-                    <div class="otp-icon">
-                        <i class="fas fa-envelope-open-text"></i>
-                    </div>
-                    <h3>Verify Your Email</h3>
-                    <p class="otp-subtitle">We've sent a 6-digit code to</p>
-                    <p class="otp-email" id="displayEmail"></p>
-                </div>
-                
-                <form id="otpForm">
-                    <div class="otp-input-group">
-                        <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" required>
-                    </div>
-                    
-                    <div class="otp-timer" id="otpTimer">
-                        <i class="fas fa-clock"></i> Code expires in <span id="countdown">10:00</span>
-                    </div>
-                    
-                    <button type="submit" class="btn-submit otp-verify-btn" id="verifyBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-check-circle"></i> Verify Email
-                        </span>
-                        <span class="btn-loader" style="display: none;">
-                            <i class="fas fa-spinner fa-spin"></i> Verifying...
-                        </span>
-                    </button>
-                    
-                    <div class="otp-footer">
-                        <p>Didn't receive the code?</p>
-                        <button type="button" class="resend-btn" id="resendBtn">
-                            <i class="fas fa-redo"></i> Resend Code
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
     
     <!-- Toast Notification Container -->
@@ -118,10 +72,6 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        let userEmail = '';
-        let countdownInterval;
-        let otpModalIsOpen = false;
-        
         // Toast Notification Function
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -155,63 +105,6 @@
             }, 5000);
         }
         
-        // OTP Input Auto Focus
-        function setupOTPInputs() {
-            const inputs = document.querySelectorAll('.otp-box');
-            
-            inputs.forEach((input, index) => {
-                // Remove previous listeners by cloning
-                const newInput = input.cloneNode(true);
-                input.replaceWith(newInput);
-            });
-            
-            // Re-get inputs after cloning
-            const freshInputs = document.querySelectorAll('.otp-box');
-            
-            freshInputs.forEach((input, index) => {
-                input.addEventListener('input', (e) => {
-                    if (e.target.value.length === 1 && index < freshInputs.length - 1) {
-                        freshInputs[index + 1].focus();
-                    }
-                });
-                
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                        freshInputs[index - 1].focus();
-                    }
-                });
-                
-                input.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    const pastedData = e.clipboardData.getData('text').slice(0, 6);
-                    pastedData.split('').forEach((char, i) => {
-                        if (freshInputs[i]) freshInputs[i].value = char;
-                    });
-                    if (pastedData.length === 6) freshInputs[5].focus();
-                });
-            });
-        }
-        
-        // Countdown Timer
-        function startCountdown(minutes = 10) {
-            let timeLeft = minutes * 60;
-            const countdownEl = document.getElementById('countdown');
-            
-            if (countdownInterval) clearInterval(countdownInterval);
-            
-            countdownInterval = setInterval(() => {
-                const mins = Math.floor(timeLeft / 60);
-                const secs = timeLeft % 60;
-                countdownEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    showToast('OTP has expired. Please request a new code.', 'warning');
-                }
-                timeLeft--;
-            }, 1000);
-        }
-        
         // Show Loading
         function showLoading(buttonId) {
             const btn = document.getElementById(buttonId);
@@ -236,56 +129,6 @@
             }
         }
         
-        // Open OTP Modal (with protection against auto-close)
-        function openOTPModal(email) {
-            otpModalIsOpen = true;
-            document.getElementById('displayEmail').textContent = email;
-            const modal = document.getElementById('otpModal');
-            modal.style.display = 'flex';
-            
-            // Disable any click events on modal that might close it
-            const overlay = document.getElementById('modalOverlay');
-            const content = document.getElementById('modalContent');
-            
-            overlay.onclick = function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                return false;
-            };
-            
-            content.onclick = function(e) {
-                e.stopPropagation();
-            };
-            
-            modal.onclick = function(e) {
-                // Only close if clicking directly on modal background (not overlay or content)
-                if (e.target === modal) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    return false;
-                }
-            };
-            
-            setupOTPInputs();
-            startCountdown(10);
-            
-            // Focus first input after delay
-            setTimeout(() => {
-                const firstInput = document.querySelector('.otp-box');
-                if (firstInput) firstInput.focus();
-            }, 300);
-        }
-        
-        // Close OTP Modal
-        function closeOTPModal() {
-            if (!otpModalIsOpen) return;
-            
-            otpModalIsOpen = false;
-            const modal = document.getElementById('otpModal');
-            modal.style.display = 'none';
-            clearInterval(countdownInterval);
-        }
-        
         // Registration Form
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -294,8 +137,6 @@
             const email = document.getElementById('email').value;
             const phoneNumber = document.getElementById('phoneNumber').value;
             const password = document.getElementById('password').value;
-            
-            userEmail = email;
             
             showLoading('submitBtn');
             
@@ -308,95 +149,20 @@
                 hideLoading('submitBtn');
                 
                 if (response.success) {
-                    showToast(response.message || 'Registration successful! Check your email for OTP.', 'success');
+                    showToast('Registration successful! Redirecting to OTP verification...', 'success');
                     
-                    // Wait a bit before showing modal
+                    // Save email to sessionStorage and redirect to OTP page
+                    sessionStorage.setItem('verificationEmail', email);
+                    
                     setTimeout(() => {
-                        openOTPModal(email);
-                    }, 500);
+                        window.location.href = `verify-otp.html?email=${encodeURIComponent(email)}`;
+                    }, 1500);
                 } else {
                     showToast(response.message || 'Registration failed. Please try again.', 'error');
                 }
             } catch (error) {
                 hideLoading('submitBtn');
                 showToast(error.message || 'Failed to register. Please check your connection.', 'error');
-            }
-        });
-        
-        // OTP Verification Form
-        document.getElementById('otpForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const otpInputs = document.querySelectorAll('.otp-box');
-            const otp = Array.from(otpInputs).map(input => input.value).join('');
-            
-            if (otp.length !== 6) {
-                showToast('Please enter all 6 digits', 'warning');
-                return;
-            }
-            
-            showLoading('verifyBtn');
-            
-            try {
-                const response = await apiRequest('/auth/verify-email', {
-                    method: 'POST',
-                    body: JSON.stringify({ email: userEmail, otp })
-                });
-                
-                hideLoading('verifyBtn');
-                
-                if (response.success) {
-                    clearInterval(countdownInterval);
-                    showToast('Email verified successfully! Redirecting to login...', 'success');
-                    
-                    // Close modal and reset form
-                    closeOTPModal();
-                    document.getElementById('registerForm').reset();
-                    
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
-                } else {
-                    showToast(response.message || 'Invalid OTP. Please try again.', 'error');
-                    otpInputs.forEach(input => input.value = '');
-                    if (otpInputs[0]) otpInputs[0].focus();
-                }
-            } catch (error) {
-                hideLoading('verifyBtn');
-                showToast(error.message || 'Verification failed. Please try again.', 'error');
-            }
-        });
-        
-        // Resend OTP
-        document.getElementById('resendBtn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const btn = e.target.closest('button');
-            if (btn) btn.disabled = true;
-            
-            try {
-                const response = await apiRequest('/auth/resend-otp', {
-                    method: 'POST',
-                    body: JSON.stringify({ email: userEmail, type: 'EMAIL_VERIFICATION' })
-                });
-                
-                if (response.success) {
-                    showToast('New OTP sent to your email!', 'success');
-                    startCountdown(10);
-                    document.querySelectorAll('.otp-box').forEach(input => input.value = '');
-                    const firstBox = document.querySelector('.otp-box');
-                    if (firstBox) firstBox.focus();
-                } else {
-                    showToast(response.message || 'Failed to resend OTP', 'error');
-                }
-            } catch (error) {
-                showToast(error.message || 'Failed to resend OTP', 'error');
-            } finally {
-                if (btn) {
-                    setTimeout(() => btn.disabled = false, 60000); // Enable after 1 minute
-                }
             }
         });
     </script>
