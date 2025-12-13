@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 "/index.html",
                                 "/login.html",
                                 "/register.html",
+                                "/verify-otp.html",
                                 "/forgot-password.html",
                                 "/movies.html",
                                 "/movie-detail.html",
