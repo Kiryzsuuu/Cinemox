@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -32,6 +33,23 @@ public class AuthService {
 
     @Autowired
     private EmailService emailService;
+
+        public Map<String, Object> getUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String role = user.getRoles().contains("ADMIN") ? "ADMIN" : "USER";
+
+        return Map.of(
+            "id", user.getId(),
+            "email", user.getEmail(),
+            "fullName", user.getFullName(),
+            "role", role,
+            "phoneNumber", user.getPhoneNumber(),
+            "active", user.isActive(),
+            "emailVerified", user.isEmailVerified()
+        );
+        }
 
     @Transactional
     public ApiResponse register(RegisterRequest request) {

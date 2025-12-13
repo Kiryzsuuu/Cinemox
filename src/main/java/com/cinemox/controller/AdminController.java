@@ -98,17 +98,54 @@ public class AdminController {
 
     @PostMapping("/schedules")
     public ResponseEntity<ApiResponse> createSchedule(@RequestBody Schedule schedule) {
+        Movie movie = movieRepository.findById(schedule.getMovieId())
+                .orElseThrow(() -> new RuntimeException("Movie not found"));
+
+        // Enrich schedule so it shows up correctly in admin and booking flows
+        schedule.setMovieId(movie.getId());
+        schedule.setMovieTitle(movie.getTitle());
+
+        if (schedule.getTotalSeats() == null) {
+            schedule.setTotalSeats(50);
+        }
+
+        schedule.setAvailableSeats(schedule.getTotalSeats());
+
+        if (schedule.getBookedSeats() == null) {
+            schedule.setBookedSeats(new java.util.ArrayList<>());
+        }
+
         Schedule savedSchedule = scheduleRepository.save(schedule);
         return ResponseEntity.ok(new ApiResponse(true, "Schedule created successfully", savedSchedule));
     }
 
     @PutMapping("/schedules/{id}")
     public ResponseEntity<ApiResponse> updateSchedule(@PathVariable String id, @RequestBody Schedule schedule) {
-        scheduleRepository.findById(id)
+        Schedule existing = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found"));
 
-        schedule.setId(id);
-        Schedule updatedSchedule = scheduleRepository.save(schedule);
+        Movie movie = movieRepository.findById(schedule.getMovieId())
+                .orElseThrow(() -> new RuntimeException("Movie not found"));
+
+        existing.setMovieId(movie.getId());
+        existing.setMovieTitle(movie.getTitle());
+        existing.setShowDate(schedule.getShowDate());
+        existing.setShowTime(schedule.getShowTime());
+        existing.setTheater(schedule.getTheater());
+        existing.setPrice(schedule.getPrice());
+        existing.setTotalSeats(schedule.getTotalSeats());
+
+        // Recalculate available seats based on booked seats already stored
+        if (existing.getBookedSeats() == null) {
+            existing.setBookedSeats(new java.util.ArrayList<>());
+        }
+        int bookedCount = existing.getBookedSeats().size();
+        int totalSeats = existing.getTotalSeats() != null ? existing.getTotalSeats() : 50;
+        existing.setAvailableSeats(Math.max(0, totalSeats - bookedCount));
+
+        existing.setActive(schedule.isActive());
+
+        Schedule updatedSchedule = scheduleRepository.save(existing);
         return ResponseEntity.ok(new ApiResponse(true, "Schedule updated successfully", updatedSchedule));
     }
 

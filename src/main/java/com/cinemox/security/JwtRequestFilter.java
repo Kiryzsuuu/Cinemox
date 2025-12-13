@@ -37,19 +37,30 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+                logger.info("JWT extracted username: " + username);
             } catch (Exception e) {
                 logger.error("JWT Token extraction failed: " + e.getMessage());
             }
+        } else {
+            logger.warn("No Authorization header or invalid format for: " + request.getRequestURI());
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            try {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                logger.info("User authorities: " + userDetails.getAuthorities());
 
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
-                        null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                if (jwtUtil.validateToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+                            null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    logger.info("Authentication set for user: " + username + " with authorities: " + userDetails.getAuthorities());
+                } else {
+                    logger.warn("Token validation failed for user: " + username);
+                }
+            } catch (Exception e) {
+                logger.error("Error loading user details: " + e.getMessage());
             }
         }
         chain.doFilter(request, response);

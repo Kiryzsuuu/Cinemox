@@ -1,5 +1,10 @@
 // Admin Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🔐 Admin Page - Checking authentication...');
+    console.log('Token exists:', !!getToken());
+    console.log('User info:', getUserInfo());
+    console.log('Is admin:', isAdmin());
+    
     if (!checkAuth() || !isAdmin()) {
         modal.show({
             title: 'Access Denied',

@@ -8,13 +8,22 @@ let currentUser = null;
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const movieId = urlParams.get('id');
+
+    // Prefer cached user info to avoid needless API hits
+    const cachedUser = getUserInfo();
+    if (cachedUser) {
+        currentUser = cachedUser;
+    }
     
     // Get current user
     const token = localStorage.getItem('token');
     if (token) {
         try {
             const response = await apiRequest('/auth/me');
-            currentUser = response.data;
+            if (response?.data) {
+                currentUser = response.data;
+                setUserInfo(response.data);
+            }
         } catch (error) {
             console.log('User not logged in');
         }
@@ -106,7 +115,7 @@ function displaySchedules(schedules) {
     }
     
     grid.innerHTML = schedules.map(schedule => `
-        <div class="schedule-card" onclick='openBookingModal(${JSON.stringify(schedule)})'>
+        <div class="schedule-card" onclick='openBookingModal(event, ${JSON.stringify(schedule)})'>
             <div class="schedule-date">
                 <i class="fas fa-calendar"></i> ${formatDate(schedule.showDate)}
             </div>
@@ -126,7 +135,7 @@ function displaySchedules(schedules) {
     `).join('');
 }
 
-function openBookingModal(schedule) {
+function openBookingModal(evt, schedule) {
     if (!isLoggedIn()) {
         alert('Please login to book tickets');
         window.location.href = 'login.html';
@@ -134,15 +143,22 @@ function openBookingModal(schedule) {
     }
     
     // Add click animation
-    event.currentTarget.classList.add('clicked');
-    setTimeout(() => {
-        event.currentTarget.classList.remove('clicked');
-    }, 400);
-    
-    currentSchedule = schedule;
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add('clicked');
+        setTimeout(() => {
+            evt.currentTarget.classList.remove('clicked');
+        }, 400);
+    }
+
+    const safeSchedule = {
+        ...schedule,
+        bookedSeats: schedule.bookedSeats || []
+    };
+
+    currentSchedule = safeSchedule;
     selectedSeats = [];
-    
-    generateSeats(schedule);
+
+    generateSeats(safeSchedule);
     updateBookingSummary();
     
     // Update schedule time info
@@ -162,6 +178,8 @@ function generateSeats(schedule) {
     const rows = 5;
     const cols = 10;
     const totalSeats = rows * cols;
+
+    const bookedSeats = schedule.bookedSeats || [];
     
     let html = '';
     for (let i = 1; i <= totalSeats; i++) {
@@ -169,7 +187,7 @@ function generateSeats(schedule) {
         const col = ((i - 1) % cols) + 1;
         const seatLabel = `${row}${col}`;
         
-        const isBooked = schedule.bookedSeats.includes(seatLabel);
+        const isBooked = bookedSeats.includes(seatLabel);
         const seatClass = isBooked ? 'booked' : 'available';
         
         html += `
@@ -212,7 +230,7 @@ function updateBookingSummary() {
 
 async function confirmBooking() {
     if (selectedSeats.length === 0) {
-        alert('Please select at least one seat');
+        showInlineNotice('Silakan pilih minimal 1 kursi.', 'warning');
         return;
     }
     
@@ -221,23 +239,97 @@ async function confirmBooking() {
         seats: selectedSeats,
         totalPrice: selectedSeats.length * currentSchedule.price
     };
-    
+
+    const confirmButton = document.querySelector('.btn-confirm');
+    if (confirmButton) {
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'Processing...';
+    }
+    if (window.loading) {
+        loading.show('Processing your booking...');
+    }
+
     try {
         const response = await apiRequest('/bookings', {
             method: 'POST',
             body: JSON.stringify(bookingData)
         });
-        
+
         if (response.success) {
-            alert('Booking successful! Check your email for ticket confirmation.');
+            showInlineNotice('Tiket berhasil dipesan! Cek email untuk konfirmasi.', 'success');
             closeBookingModal();
-            window.location.href = 'my-bookings.html';
+            setTimeout(() => {
+                window.location.href = 'my-bookings.html';
+            }, 600);
         } else {
-            alert(response.message);
+            showInlineNotice(response.message || 'Booking gagal, coba lagi.', 'error');
         }
     } catch (error) {
-        alert(error.message);
+        showInlineNotice(error.message || 'Booking gagal, coba lagi.', 'error');
+    } finally {
+        if (window.loading) {
+            loading.hide();
+        }
+        if (confirmButton) {
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'Confirm Booking';
+        }
     }
+}
+
+function showInlineNotice(message, type = 'info') {
+    if (window.notify) {
+        if (type === 'success') return notify.success(message);
+        if (type === 'error') return notify.error(message);
+        if (type === 'warning') return notify.warning(message);
+        return notify.info(message);
+    }
+
+    // Fallback mini-toast if notifications.js not loaded
+    let container = document.getElementById('inline-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'inline-toast-container';
+        container.style.position = 'fixed';
+        container.style.top = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.marginBottom = '10px';
+    toast.style.padding = '12px 16px';
+    toast.style.borderRadius = '10px';
+    toast.style.color = '#fff';
+    toast.style.minWidth = '220px';
+    toast.style.boxShadow = '0 6px 18px rgba(0,0,0,0.16)';
+    toast.style.fontWeight = '600';
+    toast.style.fontSize = '14px';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-5px)';
+    toast.style.transition = 'all 0.25s ease';
+
+    const colors = {
+        success: '#2ecc71',
+        error: '#e74c3c',
+        warning: '#f39c12',
+        info: '#3498db'
+    };
+    toast.style.background = colors[type] || colors.info;
+
+    container.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-5px)';
+        setTimeout(() => toast.remove(), 200);
+    }, 2800);
 }
 
 function formatDate(dateStr) {
@@ -396,8 +488,8 @@ async function handleReviewSubmit(e) {
     e.preventDefault();
 
     if (!currentUser) {
-        alert('Please login to submit a review');
-        window.location.href = 'login.html';
+        showInlineNotice('Silakan login untuk menulis review.', 'warning');
+        setTimeout(() => window.location.href = 'login.html', 600);
         return;
     }
 
@@ -405,12 +497,12 @@ async function handleReviewSubmit(e) {
     const comment = document.getElementById('commentInput').value.trim();
 
     if (rating === 0) {
-        alert('Please select a rating');
+        showInlineNotice('Pilih rating dulu sebelum submit.', 'warning');
         return;
     }
 
     if (!comment) {
-        alert('Please write a comment');
+        showInlineNotice('Tulis komentar singkat sebelum submit.', 'warning');
         return;
     }
 
@@ -427,7 +519,7 @@ async function handleReviewSubmit(e) {
         });
 
         if (response) {
-            alert('Review submitted successfully!');
+            showInlineNotice('Review berhasil dikirim!', 'success');
             // Reset form
             selectedRating = 0;
             document.getElementById('ratingInput').value = 0;
@@ -438,14 +530,19 @@ async function handleReviewSubmit(e) {
             await loadReviews(currentMovie.id);
         }
     } catch (error) {
-        alert(error.message || 'Failed to submit review');
+        showInlineNotice(error.message || 'Gagal mengirim review', 'error');
     }
 }
 
 async function deleteReview(reviewId) {
-    if (!confirm('Are you sure you want to delete this review?')) {
-        return;
-    }
+    const proceed = window.modal ? await modal.confirm({
+        title: 'Hapus review?',
+        message: 'Tindakan ini tidak dapat dibatalkan.',
+        confirmText: 'Hapus',
+        cancelText: 'Batal'
+    }) : confirm('Are you sure you want to delete this review?');
+
+    if (!proceed) return;
 
     try {
         const response = await apiRequest(`/reviews/${reviewId}`, {
@@ -453,10 +550,10 @@ async function deleteReview(reviewId) {
         });
 
         if (response) {
-            alert('Review deleted successfully');
+            showInlineNotice('Review dihapus.', 'success');
             await loadReviews(currentMovie.id);
         }
     } catch (error) {
-        alert(error.message || 'Failed to delete review');
+        showInlineNotice(error.message || 'Gagal menghapus review', 'error');
     }
 }

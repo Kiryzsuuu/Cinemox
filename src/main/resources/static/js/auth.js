@@ -84,7 +84,16 @@ async function apiRequest(endpoint, options = {}) {
     
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+    } else {
+        console.warn('⚠️ No token found! User might not be logged in.');
     }
+    
+    console.log('🔍 API Request:', {
+        endpoint,
+        method: options.method || 'GET',
+        hasToken: !!token,
+        userInfo: getUserInfo()
+    });
     
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -101,32 +110,44 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error('Access denied. You do not have permission to perform this action.');
         }
         
-        // Check if response has content
-        const contentType = response.headers.get('content-type');
-        let data = null;
-        
-        if (contentType && contentType.includes('application/json')) {
-            const text = await response.text();
-            data = text ? JSON.parse(text) : null;
-        } else if (response.status === 204 || response.status === 205) {
-            // No content responses
-            data = { success: true };
-        } else {
-            // Try to parse as JSON, fallback to empty object
-            try {
-                const text = await response.text();
-                data = text ? JSON.parse(text) : { success: response.ok };
-            } catch (e) {
-                data = { success: response.ok };
-            }
+        // Handle empty responses (204, 205, etc.)
+        if (response.status === 204 || response.status === 205) {
+            return { success: true };
         }
         
+        // Get response text first
+        const text = await response.text();
+        
+        // If no text content, return success based on status
+        if (!text || text.trim() === '') {
+            if (!response.ok) {
+                throw new Error('Request failed with status ' + response.status);
+            }
+            return { success: true };
+        }
+        
+        // Try to parse JSON
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (parseError) {
+            console.error('JSON parse error:', parseError);
+            console.error('Response text:', text);
+            if (!response.ok) {
+                throw new Error('Request failed with status ' + response.status);
+            }
+            // If response is OK but not JSON, return success
+            return { success: true, data: text };
+        }
+        
+        // Check if response is error
         if (!response.ok) {
             throw new Error(data?.message || 'Something went wrong');
         }
         
-        return data || { success: true };
+        return data;
     } catch (error) {
+        console.error('API Request error:', error);
         throw error;
     }
 }

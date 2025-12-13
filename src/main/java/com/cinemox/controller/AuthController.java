@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
@@ -46,6 +48,18 @@ public class AuthController {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage(), null));
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse> me(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401)
+                    .body(new ApiResponse(false, "Unauthorized", null));
+        }
+
+        String email = authentication.getName();
+        var user = authService.getUserProfile(email);
+        return ResponseEntity.ok(new ApiResponse(true, "Profile retrieved", user));
     }
 
     @PostMapping("/forgot-password")
