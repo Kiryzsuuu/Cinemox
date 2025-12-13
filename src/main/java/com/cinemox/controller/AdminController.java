@@ -48,6 +48,26 @@ public class AdminController {
         return ResponseEntity.ok(new ApiResponse(true, "Users retrieved successfully", users));
     }
 
+    @PostMapping("/users")
+    public ResponseEntity<ApiResponse> createAdmin(@RequestBody User user) {
+        // Check if email already exists
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Email already exists", null));
+        }
+        
+        // Set admin role and encrypt password
+        user.getRoles().clear();
+        user.getRoles().add("ROLE_ADMIN");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setActive(true);
+        user.setEmailVerified(true);
+        user.setCreatedAt(LocalDateTime.now());
+        
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(new ApiResponse(true, "Admin created successfully", savedUser));
+    }
+
     @PutMapping("/users/{id}/toggle-active")
     public ResponseEntity<ApiResponse> toggleUserActive(@PathVariable String id) {
         User user = userRepository.findById(id)
