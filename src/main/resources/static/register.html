@@ -247,12 +247,19 @@
                     
                     // Show OTP Modal
                     document.getElementById('displayEmail').textContent = email;
-                    document.getElementById('otpModal').style.display = 'flex';
-                    setupOTPInputs();
+                    const otpModal = document.getElementById('otpModal');
+                    otpModal.style.display = 'flex';
+                    
+                    // Focus on first OTP input after a slight delay
+                    setTimeout(() => {
+                        setupOTPInputs();
+                        const firstInput = document.querySelector('.otp-box');
+                        if (firstInput) firstInput.focus();
+                    }, 300);
+                    
                     startCountdown(10);
                     
-                    // Clear form
-                    document.getElementById('registerForm').reset();
+                    // Don't reset form yet - wait until after OTP verification
                 } else {
                     showToast(response.message || 'Registration failed. Please try again.', 'error');
                 }
@@ -287,6 +294,11 @@
                 if (response.success) {
                     clearInterval(countdownInterval);
                     showToast('Email verified successfully! Redirecting to login...', 'success');
+                    
+                    // Close modal and reset form
+                    document.getElementById('otpModal').style.display = 'none';
+                    document.getElementById('registerForm').reset();
+                    
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 2000);
