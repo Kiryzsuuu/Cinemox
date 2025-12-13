@@ -250,6 +250,23 @@
                     const otpModal = document.getElementById('otpModal');
                     otpModal.style.display = 'flex';
                     
+                    // Prevent modal from closing when clicking on modal content
+                    const modalContent = otpModal.querySelector('.custom-modal-content');
+                    if (modalContent) {
+                        modalContent.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                        });
+                    }
+                    
+                    // Prevent closing modal when clicking overlay (optional - remove if you want overlay click to close)
+                    const overlay = otpModal.querySelector('.custom-modal-overlay');
+                    if (overlay) {
+                        overlay.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        });
+                    }
+                    
                     // Focus on first OTP input after a slight delay
                     setTimeout(() => {
                         setupOTPInputs();
