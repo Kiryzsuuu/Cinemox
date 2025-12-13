@@ -66,8 +66,8 @@
         
         <!-- OTP Modal -->
         <div id="otpModal" class="custom-modal" style="display: none;">
-            <div class="custom-modal-overlay"></div>
-            <div class="custom-modal-content otp-modal-content">
+            <div class="custom-modal-overlay" id="modalOverlay"></div>
+            <div class="custom-modal-content otp-modal-content" id="modalContent">
                 <div class="otp-header">
                     <div class="otp-icon">
                         <i class="fas fa-envelope-open-text"></i>
@@ -114,15 +114,13 @@
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
     
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="toast-container"></div>
-    
     <script src="js/notifications.js"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let userEmail = '';
         let countdownInterval;
+        let otpModalIsOpen = false;
         
         // Toast Notification Function
         function showToast(message, type = 'info') {
@@ -162,15 +160,24 @@
             const inputs = document.querySelectorAll('.otp-box');
             
             inputs.forEach((input, index) => {
+                // Remove previous listeners by cloning
+                const newInput = input.cloneNode(true);
+                input.replaceWith(newInput);
+            });
+            
+            // Re-get inputs after cloning
+            const freshInputs = document.querySelectorAll('.otp-box');
+            
+            freshInputs.forEach((input, index) => {
                 input.addEventListener('input', (e) => {
-                    if (e.target.value.length === 1 && index < inputs.length - 1) {
-                        inputs[index + 1].focus();
+                    if (e.target.value.length === 1 && index < freshInputs.length - 1) {
+                        freshInputs[index + 1].focus();
                     }
                 });
                 
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                        inputs[index - 1].focus();
+                        freshInputs[index - 1].focus();
                     }
                 });
                 
@@ -178,9 +185,9 @@
                     e.preventDefault();
                     const pastedData = e.clipboardData.getData('text').slice(0, 6);
                     pastedData.split('').forEach((char, i) => {
-                        if (inputs[i]) inputs[i].value = char;
+                        if (freshInputs[i]) freshInputs[i].value = char;
                     });
-                    if (pastedData.length === 6) inputs[5].focus();
+                    if (pastedData.length === 6) freshInputs[5].focus();
                 });
             });
         }
@@ -208,17 +215,75 @@
         // Show Loading
         function showLoading(buttonId) {
             const btn = document.getElementById(buttonId);
-            btn.disabled = true;
-            btn.querySelector('.btn-text').style.display = 'none';
-            btn.querySelector('.btn-loader').style.display = 'inline-flex';
+            if (btn) {
+                btn.disabled = true;
+                const btnText = btn.querySelector('.btn-text');
+                const btnLoader = btn.querySelector('.btn-loader');
+                if (btnText) btnText.style.display = 'none';
+                if (btnLoader) btnLoader.style.display = 'inline-flex';
+            }
         }
         
         // Hide Loading
         function hideLoading(buttonId) {
             const btn = document.getElementById(buttonId);
-            btn.disabled = false;
-            btn.querySelector('.btn-text').style.display = 'inline-flex';
-            btn.querySelector('.btn-loader').style.display = 'none';
+            if (btn) {
+                btn.disabled = false;
+                const btnText = btn.querySelector('.btn-text');
+                const btnLoader = btn.querySelector('.btn-loader');
+                if (btnText) btnText.style.display = 'inline-flex';
+                if (btnLoader) btnLoader.style.display = 'none';
+            }
+        }
+        
+        // Open OTP Modal (with protection against auto-close)
+        function openOTPModal(email) {
+            otpModalIsOpen = true;
+            document.getElementById('displayEmail').textContent = email;
+            const modal = document.getElementById('otpModal');
+            modal.style.display = 'flex';
+            
+            // Disable any click events on modal that might close it
+            const overlay = document.getElementById('modalOverlay');
+            const content = document.getElementById('modalContent');
+            
+            overlay.onclick = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
+            };
+            
+            content.onclick = function(e) {
+                e.stopPropagation();
+            };
+            
+            modal.onclick = function(e) {
+                // Only close if clicking directly on modal background (not overlay or content)
+                if (e.target === modal) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return false;
+                }
+            };
+            
+            setupOTPInputs();
+            startCountdown(10);
+            
+            // Focus first input after delay
+            setTimeout(() => {
+                const firstInput = document.querySelector('.otp-box');
+                if (firstInput) firstInput.focus();
+            }, 300);
+        }
+        
+        // Close OTP Modal
+        function closeOTPModal() {
+            if (!otpModalIsOpen) return;
+            
+            otpModalIsOpen = false;
+            const modal = document.getElementById('otpModal');
+            modal.style.display = 'none';
+            clearInterval(countdownInterval);
         }
         
         // Registration Form
@@ -245,38 +310,10 @@
                 if (response.success) {
                     showToast(response.message || 'Registration successful! Check your email for OTP.', 'success');
                     
-                    // Show OTP Modal
-                    document.getElementById('displayEmail').textContent = email;
-                    const otpModal = document.getElementById('otpModal');
-                    otpModal.style.display = 'flex';
-                    
-                    // Prevent modal from closing when clicking on modal content
-                    const modalContent = otpModal.querySelector('.custom-modal-content');
-                    if (modalContent) {
-                        modalContent.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                        });
-                    }
-                    
-                    // Prevent closing modal when clicking overlay (optional - remove if you want overlay click to close)
-                    const overlay = otpModal.querySelector('.custom-modal-overlay');
-                    if (overlay) {
-                        overlay.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                        });
-                    }
-                    
-                    // Focus on first OTP input after a slight delay
+                    // Wait a bit before showing modal
                     setTimeout(() => {
-                        setupOTPInputs();
-                        const firstInput = document.querySelector('.otp-box');
-                        if (firstInput) firstInput.focus();
-                    }, 300);
-                    
-                    startCountdown(10);
-                    
-                    // Don't reset form yet - wait until after OTP verification
+                        openOTPModal(email);
+                    }, 500);
                 } else {
                     showToast(response.message || 'Registration failed. Please try again.', 'error');
                 }
@@ -289,6 +326,7 @@
         // OTP Verification Form
         document.getElementById('otpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            e.stopPropagation();
             
             const otpInputs = document.querySelectorAll('.otp-box');
             const otp = Array.from(otpInputs).map(input => input.value).join('');
@@ -313,7 +351,7 @@
                     showToast('Email verified successfully! Redirecting to login...', 'success');
                     
                     // Close modal and reset form
-                    document.getElementById('otpModal').style.display = 'none';
+                    closeOTPModal();
                     document.getElementById('registerForm').reset();
                     
                     setTimeout(() => {
@@ -322,7 +360,7 @@
                 } else {
                     showToast(response.message || 'Invalid OTP. Please try again.', 'error');
                     otpInputs.forEach(input => input.value = '');
-                    otpInputs[0].focus();
+                    if (otpInputs[0]) otpInputs[0].focus();
                 }
             } catch (error) {
                 hideLoading('verifyBtn');
@@ -331,9 +369,12 @@
         });
         
         // Resend OTP
-        document.getElementById('resendBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('resendBtn');
-            btn.disabled = true;
+        document.getElementById('resendBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const btn = e.target.closest('button');
+            if (btn) btn.disabled = true;
             
             try {
                 const response = await apiRequest('/auth/resend-otp', {
@@ -345,14 +386,17 @@
                     showToast('New OTP sent to your email!', 'success');
                     startCountdown(10);
                     document.querySelectorAll('.otp-box').forEach(input => input.value = '');
-                    document.querySelector('.otp-box').focus();
+                    const firstBox = document.querySelector('.otp-box');
+                    if (firstBox) firstBox.focus();
                 } else {
                     showToast(response.message || 'Failed to resend OTP', 'error');
                 }
             } catch (error) {
                 showToast(error.message || 'Failed to resend OTP', 'error');
             } finally {
-                setTimeout(() => btn.disabled = false, 60000); // Enable after 1 minute
+                if (btn) {
+                    setTimeout(() => btn.disabled = false, 60000); // Enable after 1 minute
+                }
             }
         });
     </script>
